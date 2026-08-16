@@ -1,0 +1,13 @@
+node_modules/
+dist/
+dist-frontend/
+build/
+*.jsc
+*.db
+*.sqlite
+test-results/
+playwright-report/
+.DS_Store
+start.log
+scratch/
+Prescriptions/
