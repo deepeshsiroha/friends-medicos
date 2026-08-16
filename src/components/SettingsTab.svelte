@@ -22,10 +22,7 @@
   }
 
   function submitSettings() {
-    if (!pharmacyName.trim()) {
-      alert("Pharmacy Name is required.");
-      return;
-    }
+    // Removed pharmacyName requirement so users can save address freely
 
     const config = {
       pharmacy_name: pharmacyName.trim(),

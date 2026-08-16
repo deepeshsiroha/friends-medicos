@@ -527,7 +527,7 @@
         </div>
 
         <!-- Right Side: Cart & Patient -->
-        <div style="flex: 1; display: flex; flex-direction: column; gap: 15px; overflow: hidden;">
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; padding-right: 4px;">
 
                 <div style="display: flex; gap: 12px;" use:clickOutside={() => showMobileSuggest = false}>
                     <div class="form-group" style="flex: 1; position: relative;">
