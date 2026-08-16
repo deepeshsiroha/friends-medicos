@@ -4,7 +4,7 @@ const fs = require('fs');
 const Database = require('better-sqlite3');
 
 // Initialize the SQLite database connection in the user data directory
-const dbPath = path.join(app.getPath('userData'), 'jeevanrekha_data.db');
+const dbPath = path.join(app.getPath('userData'), 'friendsmedicos_data.db');
 const db = new Database(dbPath);
 
 let mainWindow;
