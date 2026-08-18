@@ -10,8 +10,13 @@
   let billPaymentMethod = 'Cash';
   let billPaymentStatus = 'Paid';
   let billRemarks = '';
+
   let billCgstTotal = 0;
   let billSgstTotal = 0;
+  let billDiscount = 0;
+  let discountPercent = 0;
+  let billSubtotal = 0;
+  let billTotal = 0;
 
   let currentSubTab = 'pos'; // 'pos' or 'history'
 
@@ -21,10 +26,6 @@
   let customDesc = '';
   let customQty = 1;
   let customPrice = '';
-
-  let billDiscount = 0;
-  let billSubtotal = 0;
-  let billTotal = 0;
 
   let billSearchQuery = '';
   let debounceTimeout: any;
@@ -119,7 +120,29 @@
 
       return sum + item.total;
     }, 0);
+    
+    // If discount percentage is being used, update absolute discount
+    if (discountPercent > 0) {
+      billDiscount = parseFloat(((billSubtotal * discountPercent) / 100).toFixed(2)) || 0;
+    }
+    
     billTotal = Math.max(0, billSubtotal - (billDiscount || 0));
+  }
+
+  function onDiscountPercentChange() {
+    if (discountPercent < 0) discountPercent = 0;
+    if (discountPercent > 100) discountPercent = 100;
+    billDiscount = parseFloat(((billSubtotal * discountPercent) / 100).toFixed(2)) || 0;
+    calculateTotals();
+  }
+
+  function onDiscountAmountChange() {
+    if (billSubtotal > 0) {
+      discountPercent = parseFloat(((billDiscount / billSubtotal) * 100).toFixed(2)) || 0;
+    } else {
+      discountPercent = 0;
+    }
+    calculateTotals();
   }
 
   function addCustomBillItem() {
@@ -243,10 +266,11 @@
     billPaymentMethod = 'Cash';
     billPaymentStatus = 'Paid';
     billRemarks = '';
-    billItems = [];
     billDiscount = 0;
+    discountPercent = 0;
     billSubtotal = 0;
     billTotal = 0;
+    billItems = [];
     showMobileSuggest = false;
   }
 
@@ -665,9 +689,15 @@
                         </div>
                         <div
                             style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); align-items: center;">
-                            <span>Discount (₹):</span>
-                            <input type="number" id="bill-discount" min="0" bind:value={billDiscount} on:input={calculateTotals}
-                                style="width: 60px; padding: 2px 4px; font-size: 12px; text-align: right; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text);">
+                            <span>Discount:</span>
+                            <div style="display: flex; gap: 4px; align-items: center;">
+                                <input type="number" id="bill-discount-pct" min="0" max="100" placeholder="%" bind:value={discountPercent} on:input={onDiscountPercentChange}
+                                    style="width: 45px; padding: 2px 4px; font-size: 12px; text-align: right; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text);">
+                                <span>%</span>
+                                <span>= ₹</span>
+                                <input type="number" id="bill-discount" min="0" bind:value={billDiscount} on:input={onDiscountAmountChange}
+                                    style="width: 60px; padding: 2px 4px; font-size: 12px; text-align: right; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text);">
+                            </div>
                         </div>
                         <div
                             style="display: flex; justify-content: space-between; font-weight: bold; font-size: 14px; border-top: 1px solid var(--border); padding-top: 6px; color: var(--primary);">
