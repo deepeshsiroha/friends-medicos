@@ -145,18 +145,6 @@ try {
 }
 
 try {
-  db.exec('ALTER TABLE consultations ADD COLUMN history TEXT;');
-} catch (e) {
-  // column already exists, safe to ignore
-}
-
-try {
-  db.exec('ALTER TABLE consultations ADD COLUMN examination TEXT;');
-} catch (e) {
-  // column already exists, safe to ignore
-}
-
-try {
   db.exec('ALTER TABLE inventory ADD COLUMN unit_price REAL DEFAULT 0.0;');
 } catch (e) {
   // column already exists, safe to ignore
@@ -732,7 +720,7 @@ ipcMain.on('get-analytics-data', (event) => {
 
     // 5. Unique Patients Count
     const uniquePatientsRow = db.prepare(`
-      SELECT COUNT(DISTINCT mobile) as count FROM consultations
+      SELECT COUNT(DISTINCT patient_mobile) as count FROM bills WHERE patient_mobile != ''
     `).get();
     const uniquePatients = uniquePatientsRow ? (uniquePatientsRow.count || 0) : 0;
 
@@ -784,21 +772,21 @@ ipcMain.on('get-analytics-data', (event) => {
     // 11. Patient Demographics (New vs Returning)
     const newPatientsRow = db.prepare(`
       SELECT COUNT(*) as count FROM (
-        SELECT mobile FROM consultations GROUP BY mobile HAVING COUNT(id) = 1
+        SELECT patient_mobile FROM bills WHERE patient_mobile != '' GROUP BY patient_mobile HAVING COUNT(id) = 1
       )
     `).get();
     const newPatients = newPatientsRow ? (newPatientsRow.count || 0) : 0;
 
     const returningPatientsRow = db.prepare(`
       SELECT COUNT(*) as count FROM (
-        SELECT mobile FROM consultations GROUP BY mobile HAVING COUNT(id) > 1
+        SELECT patient_mobile FROM bills WHERE patient_mobile != '' GROUP BY patient_mobile HAVING COUNT(id) > 1
       )
     `).get();
     const returningPatients = returningPatientsRow ? (returningPatientsRow.count || 0) : 0;
 
     // Total Patient Visits
     const totalVisitsRow = db.prepare(`
-      SELECT COUNT(*) as count FROM consultations
+      SELECT COUNT(*) as count FROM bills
     `).get();
     const totalVisits = totalVisitsRow ? (totalVisitsRow.count || 0) : 0;
 
