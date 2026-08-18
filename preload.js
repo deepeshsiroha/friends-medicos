@@ -32,6 +32,9 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
             'get-suppliers',
             'save-supplier',
             'add-supplier-payment',
+            'get-supplier-bills',
+            'save-supplier-bill',
+            'pay-supplier-bill',
             'get-expenses',
             'save-expense',
             'delete-expense'
@@ -66,6 +69,9 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
             'toggle-payment-status',
             'supplier-saved',
             'supplier-payment-added',
+            'supplier-bills-data',
+            'supplier-bill-saved',
+            'supplier-bill-paid',
             'expenses-data',
             'expense-save-status',
             'expense-delete-status'

@@ -64,6 +64,18 @@ db.exec(`
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 
+  CREATE TABLE IF NOT EXISTS supplier_bills (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    supplier_id INTEGER NOT NULL,
+    bill_date TEXT NOT NULL,
+    bill_amount REAL NOT NULL,
+    amount_paid REAL DEFAULT 0,
+    status TEXT DEFAULT 'Pending',
+    remarks TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(supplier_id) REFERENCES suppliers(id)
+  );
+
   CREATE TABLE IF NOT EXISTS inventory_issues (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     inventory_id INTEGER,
@@ -876,6 +888,52 @@ ipcMain.on('add-supplier-payment', (event, supplierId, amount) => {
     event.reply('supplier-payment-added', { success: true });
   } catch(e) {
     event.reply('supplier-payment-added', { success: false, error: e.message });
+  }
+});
+
+// --- SUPPLIER BILLS CHANNELS ---
+ipcMain.on('get-supplier-bills', (event, supplierId) => {
+  try {
+    const rows = db.prepare('SELECT * FROM supplier_bills WHERE supplier_id = ? ORDER BY bill_date DESC, id DESC').all(supplierId);
+    event.reply('supplier-bills-data', { success: true, rows });
+  } catch (e) {
+    event.reply('supplier-bills-data', { success: false, rows: [], error: e.message });
+  }
+});
+
+ipcMain.on('save-supplier-bill', (event, bill) => {
+  try {
+    const status = bill.amount_paid >= bill.bill_amount ? 'Paid' : (bill.amount_paid > 0 ? 'Partial' : 'Pending');
+    db.transaction(() => {
+      db.prepare('INSERT INTO supplier_bills (supplier_id, bill_date, bill_amount, amount_paid, status, remarks) VALUES (?, ?, ?, ?, ?, ?)')
+        .run(bill.supplier_id, bill.bill_date, bill.bill_amount, bill.amount_paid, status, bill.remarks);
+      
+      const unpaidAmount = bill.bill_amount - bill.amount_paid;
+      // Adding a bill increases what we owe (decreases the balance)
+      db.prepare('UPDATE suppliers SET balance = balance - ? WHERE id = ?').run(unpaidAmount, bill.supplier_id);
+    })();
+    event.reply('supplier-bill-saved', { success: true });
+  } catch(e) {
+    event.reply('supplier-bill-saved', { success: false, error: e.message });
+  }
+});
+
+ipcMain.on('pay-supplier-bill', (event, billId, amount) => {
+  try {
+    db.transaction(() => {
+      const bill = db.prepare('SELECT * FROM supplier_bills WHERE id = ?').get(billId);
+      if (bill) {
+        const newPaid = bill.amount_paid + amount;
+        const status = newPaid >= bill.bill_amount ? 'Paid' : 'Partial';
+        db.prepare('UPDATE supplier_bills SET amount_paid = ?, status = ? WHERE id = ?').run(newPaid, status, billId);
+        
+        // Paying off a bill decreases what we owe (increases the balance)
+        db.prepare('UPDATE suppliers SET balance = balance + ? WHERE id = ?').run(amount, bill.supplier_id);
+      }
+    })();
+    event.reply('supplier-bill-paid', { success: true });
+  } catch(e) {
+    event.reply('supplier-bill-paid', { success: false, error: e.message });
   }
 });
 
