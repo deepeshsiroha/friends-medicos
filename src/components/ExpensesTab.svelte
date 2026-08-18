@@ -37,7 +37,7 @@
       payment_method: paymentMethod
     };
 
-    ipcRenderer.send('save-expense', expense);
+    window.ipcRenderer.send('save-expense', expense);
     
     // Clear form after submission
     amount = '';
@@ -48,14 +48,14 @@
     showToast("Expense saved successfully!");
     
     // Re-fetch
-    setTimeout(() => ipcRenderer.send('get-expenses'), 300);
+    setTimeout(() => window.ipcRenderer.send('get-expenses'), 300);
   }
 
   function deleteExpense(id: number) {
     if (confirm("Are you sure you want to delete this expense record?")) {
-      ipcRenderer.send('delete-expense', id);
+      window.ipcRenderer.send('delete-expense', id);
       showToast("Expense deleted");
-      setTimeout(() => ipcRenderer.send('get-expenses'), 300);
+      setTimeout(() => window.ipcRenderer.send('get-expenses'), 300);
     }
   }
 
@@ -63,7 +63,7 @@
 
 </script>
 
-<div class="tab-content fade-in">
+<div class="tab-content active fade-in">
   <div class="header-container">
     <div>
       <h2>Daily Expenses</h2>
