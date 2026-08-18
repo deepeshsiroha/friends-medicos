@@ -393,6 +393,22 @@
     doc.setFont("helvetica", "normal");
     const items = bill.items || [];
     items.forEach((item: any, index: number) => {
+      // Check if we need to add a new page (A5 landscape height is 148, leave 20 for margin)
+      if (y > 120) {
+        doc.addPage();
+        y = 15;
+        doc.setFont("helvetica", "bold");
+        doc.line(15, y, 195, y);
+        doc.text("S.No.", 18, y + 5);
+        doc.text("Item Description", 35, y + 5);
+        doc.text("Qty", 125, y + 5, { align: "center" });
+        doc.text("Unit Price (Rs.)", 155, y + 5, { align: "right" });
+        doc.text("Total (Rs.)", 192, y + 5, { align: "right" });
+        doc.line(15, y + 8, 195, y + 8);
+        y += 13;
+        doc.setFont("helvetica", "normal");
+      }
+
       const descriptionLines = doc.splitTextToSize(item.item_name || '', 75);
       
       doc.text((index + 1).toString(), 18, y);
@@ -403,11 +419,22 @@
       
       for (let i = 1; i < descriptionLines.length; i++) {
         y += 5;
+        // Check for page break during multi-line description
+        if (y > 135) {
+          doc.addPage();
+          y = 15;
+          doc.setFont("helvetica", "normal");
+        }
         doc.text(descriptionLines[i], 35, y);
       }
       
       y += 8;
     });
+
+    if (y > 115) {
+      doc.addPage();
+      y = 15;
+    }
 
     doc.line(15, y - 3, 195, y - 3);
 
