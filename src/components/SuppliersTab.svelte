@@ -11,10 +11,10 @@
   let supContact = '';
   let supGstin = '';
 
-  let showPaymentModal = false;
+  
   let paymentSupplierId = 0;
   let paymentAmount = 0;
-  let paymentSupplierName = '';
+  
 
   let showAddBillModal = false;
   let billSupplierId = 0;
@@ -24,20 +24,39 @@
   let supplierAmountPaid = 0;
   let supplierBillRemarks = '';
 
-  let showBillsModal = false;
-  let currentSupplierBills = [];
-  let viewBillsSupplierName = '';
+  let showLedgerModal = false;
+  let currentLedgerItems = [];
+  let currentLedgerSupplier = null;
+  
 
   let payBillId = 0;
   let payBillAmount = 0;
   let payBillMax = 0;
   let showPayBillModal = false;
 
+  const handleSupplierDeleted = (event, res) => {
+    if (res.success) {
+      showToast('Supplier deleted successfully!');
+      window.ipcRenderer.send('get-suppliers'); // Refresh list
+    } else {
+      alert('Error: ' + res.error);
+    }
+  };
+
+  function deleteSupplier(supplier) {
+    if (confirm(`Are you sure you want to delete supplier "${supplier.name}"? This will delete all their transactions and bills permanently.`)) {
+      window.ipcRenderer.send('delete-supplier', supplier.id);
+    }
+  }
+
   const handleSupplierSaved = (event, res) => {
     if (res.success) {
       showToast('Supplier saved successfully!');
       showAddModal = false;
-      window.ipcRenderer.send('get-suppliers'); // Refresh
+            window.ipcRenderer.send('get-suppliers'); // Refresh
+      if (showLedgerModal && currentLedgerSupplier) {
+        window.ipcRenderer.send('get-supplier-bills', currentLedgerSupplier.id);
+      }
     } else {
       alert('Error: ' + res.error);
     }
@@ -47,7 +66,10 @@
     if (res.success) {
       showToast('Payment recorded successfully!');
       showPaymentModal = false;
-      window.ipcRenderer.send('get-suppliers'); // Refresh
+            window.ipcRenderer.send('get-suppliers'); // Refresh
+      if (showLedgerModal && currentLedgerSupplier) {
+        window.ipcRenderer.send('get-supplier-bills', currentLedgerSupplier.id);
+      }
     } else {
       alert('Error: ' + res.error);
     }
@@ -57,18 +79,39 @@
     if (res.success) {
       showToast('Bill saved successfully!');
       showAddBillModal = false;
-      window.ipcRenderer.send('get-suppliers'); // Refresh
+            window.ipcRenderer.send('get-suppliers'); // Refresh
+      if (showLedgerModal && currentLedgerSupplier) {
+        window.ipcRenderer.send('get-supplier-bills', currentLedgerSupplier.id);
+      }
     } else {
       alert('Error: ' + res.error);
     }
   };
 
+  const handleBillDeleted = (event, res) => {
+    if (res.success) {
+      showToast('Bill deleted successfully');
+      window.ipcRenderer.send('get-suppliers');
+      if (showLedgerModal && currentLedgerSupplier) {
+        window.ipcRenderer.send('get-supplier-bills', currentLedgerSupplier.id);
+      }
+    } else {
+      alert('Error deleting bill: ' + res.error);
+    }
+  };
+
+  function deleteBill(id) {
+    if (confirm("Are you sure you want to delete this transaction? This will reverse its effect on your balance.")) {
+      window.ipcRenderer.send('delete-supplier-bill', id);
+    }
+  }
+
   const handleSupplierBillsData = (event, res) => {
     if (res.success) {
-      currentSupplierBills = res.rows;
-      showBillsModal = true;
+      currentLedgerItems = res.rows;
+      showLedgerModal = true;
     } else {
-      alert('Error: ' + res.error);
+      alert('Error fetching bills: ' + res.error);
     }
   };
 
@@ -77,7 +120,10 @@
       showToast('Payment recorded successfully!');
       showPayBillModal = false;
       window.ipcRenderer.send('get-supplier-bills', billSupplierId);
-      window.ipcRenderer.send('get-suppliers'); // Refresh main balance
+      window.ipcRenderer.send('get-suppliers'); // Refresh
+      if (showLedgerModal && currentLedgerSupplier) {
+        window.ipcRenderer.send('get-supplier-bills', currentLedgerSupplier.id);
+      }
     } else {
       alert('Error: ' + res.error);
     }
@@ -86,14 +132,18 @@
   let unsubSaved: (() => void);
   let unsubPayment: (() => void);
   let unsubBillSaved: (() => void);
-  let unsubBillsData: (() => void);
+  let unsubLedgerData: (() => void);
+  let unsubTrxDeleted: (() => void);
+  let unsubSupplierDeleted: (() => void);
   let unsubBillPaid: (() => void);
 
   onMount(() => {
     unsubSaved = window.ipcRenderer.on('supplier-saved', handleSupplierSaved);
     unsubPayment = window.ipcRenderer.on('supplier-payment-added', handleSupplierPaymentAdded);
     unsubBillSaved = window.ipcRenderer.on('supplier-bill-saved', handleSupplierBillSaved);
-    unsubBillsData = window.ipcRenderer.on('supplier-bills-data', handleSupplierBillsData);
+    unsubLedgerData = window.ipcRenderer.on('supplier-bills-data', handleSupplierBillsData);
+    unsubTrxDeleted = window.ipcRenderer.on('supplier-bill-deleted', handleBillDeleted);
+    unsubSupplierDeleted = window.ipcRenderer.on('supplier-deleted', handleSupplierDeleted);
     unsubBillPaid = window.ipcRenderer.on('supplier-bill-paid', handleSupplierBillPaid);
   });
 
@@ -101,7 +151,9 @@
     if (unsubSaved) unsubSaved();
     if (unsubPayment) unsubPayment();
     if (unsubBillSaved) unsubBillSaved();
-    if (unsubBillsData) unsubBillsData();
+    if (unsubLedgerData) unsubLedgerData();
+    if (unsubTrxDeleted) unsubTrxDeleted();
+    if (unsubSupplierDeleted) unsubSupplierDeleted();
     if (unsubBillPaid) unsubBillPaid();
   });
 
@@ -131,12 +183,7 @@
     window.ipcRenderer.send('save-supplier', { id: editId, name: supName.trim(), contact: supContact.trim(), gstin: supGstin.trim() });
   }
 
-  function openPaymentModal(supplier) {
-    paymentSupplierId = supplier.id;
-    paymentSupplierName = supplier.name;
-    paymentAmount = 0;
-    showPaymentModal = true;
-  }
+
 
   function savePayment() {
     if (paymentAmount <= 0) return alert("Amount must be positive");
@@ -166,9 +213,8 @@
     });
   }
 
-  function viewBills(supplier) {
-    billSupplierId = supplier.id;
-    viewBillsSupplierName = supplier.name;
+  function openLedger(supplier) {
+    currentLedgerSupplier = supplier;
     window.ipcRenderer.send('get-supplier-bills', supplier.id);
   }
 
@@ -181,7 +227,7 @@
 
   function saveBillPayment() {
     if (payBillAmount <= 0 || payBillAmount > payBillMax) return alert("Invalid payment amount");
-    window.ipcRenderer.send('pay-supplier-bill', payBillId, payBillAmount);
+    window.ipcRenderer.send('pay-supplier-bill', { billId: payBillId, amount: payBillAmount });
   }
 </script>
 
@@ -225,10 +271,9 @@
                 </td>
                 <td>
                   <div style="display:flex; gap:8px;">
-                    <button class="btn-secondary" style="padding:4px 10px; font-size:12px;" on:click={() => openAddBillModal(sup)}>Add Bill</button>
-                    <button class="btn-secondary" style="padding:4px 10px; font-size:12px;" on:click={() => viewBills(sup)}>View Bills</button>
-                    <button class="btn-secondary" style="padding:4px 10px; font-size:12px;" on:click={() => openPaymentModal(sup)}>Add Open Payment</button>
-                    <button class="btn-secondary" style="padding:4px 10px; font-size:12px;" on:click={() => openAddModal(sup)}>Edit</button>
+                    <button class="btn-primary" style="padding:6px 14px; font-size:12px;" on:click={() => openLedger(sup)}>View Ledger</button>
+                    <button class="btn-secondary" style="padding:6px 14px; font-size:12px;" on:click={() => openAddModal(sup)}>Edit</button>
+                    <button class="btn-danger" style="padding:6px 14px; font-size:12px;" on:click={() => deleteSupplier(sup)}>Delete</button>
                   </div>
                 </td>
               </tr>
@@ -264,25 +309,10 @@
   </div>
 {/if}
 
-{#if showPaymentModal}
-  <div class="modal-overlay show" style="display: flex;">
-    <div class="modal-card" style="background:var(--card-bg); max-width:400px;">
-      <h3 style="margin-top:0;">Add Open Payment for {paymentSupplierName}</h3>
-      <div class="form-group">
-        <label>Payment Amount (₹)</label>
-        <input type="number" bind:value={paymentAmount} min="1">
-      </div>
-      <p style="font-size:12px; color:var(--text-muted);">This will INCREASE the balance. Balances are negative when you Owe money (Purchases) and positive when paid.</p>
-      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
-        <button class="btn-secondary" on:click={() => showPaymentModal = false}>Cancel</button>
-        <button class="btn-primary" on:click={savePayment}>Record Payment</button>
-      </div>
-    </div>
-  </div>
-{/if}
+
 
 {#if showAddBillModal}
-  <div class="modal-overlay show" style="display: flex;">
+  <div class="modal-overlay show" style="display: flex; z-index: 4000;">
     <div class="modal-card" style="background:var(--card-bg); max-width:400px;">
       <h3 style="margin-top:0;">Add Bill for {billSupplierName}</h3>
       <div class="form-group">
@@ -309,68 +339,107 @@
   </div>
 {/if}
 
-{#if showBillsModal}
+{#if showLedgerModal && currentLedgerSupplier}
   <div class="modal-overlay show" style="display: flex;">
-    <div class="modal-card modal-lg" style="background:var(--card-bg);">
-      <h3 style="margin-top:0;">Bill History - {viewBillsSupplierName}</h3>
+    <div class="modal-card" style="background:var(--card-bg); width: 850px; max-width:95vw; max-height: 90vh; display: flex; flex-direction: column;">
       
-      <div style="max-height: 400px; overflow-y: auto; margin-top: 15px;">
-        {#if currentSupplierBills.length === 0}
-          <div style="padding: 20px; text-align: center; color: var(--text-muted);">No bills found for this supplier.</div>
+      <!-- Header Section -->
+      <div style="padding: 24px 24px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--bg-color); border-radius: 12px 12px 0 0;">
+        <div>
+          <h2 style="margin: 0; font-size: 20px; display: flex; align-items: center; gap: 10px;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            {currentLedgerSupplier.name}
+          </h2>
+          <div style="font-size: 13px; color: var(--text-muted); margin-top: 6px;">
+            GSTIN: {currentLedgerSupplier.gstin || 'N/A'} • Contact: {currentLedgerSupplier.contact || 'N/A'}
+          </div>
+        </div>
+        
+        <div style="text-align: right; background: var(--card-bg); padding: 12px 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid var(--border);">
+          <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Total Outstanding</div>
+          {#if currentLedgerSupplier.balance < 0}
+            <div style="color: var(--danger); font-size: 22px; font-weight: 700;">₹{Math.abs(currentLedgerSupplier.balance).toFixed(2)}</div>
+            <div style="font-size: 11px; color: var(--danger); opacity: 0.8;">You owe supplier</div>
+          {:else if currentLedgerSupplier.balance > 0}
+            <div style="color: var(--success); font-size: 22px; font-weight: 700;">₹{currentLedgerSupplier.balance.toFixed(2)}</div>
+            <div style="font-size: 11px; color: var(--success); opacity: 0.8;">Advance paid</div>
+          {:else}
+            <div style="color: var(--text-muted); font-size: 22px; font-weight: 700;">₹0.00</div>
+            <div style="font-size: 11px; color: var(--text-muted);">Fully Settled</div>
+          {/if}
+        </div>
+      </div>
+
+      <!-- Table Section -->
+      <div style="padding: 24px; overflow-y: auto; flex-grow: 1;">
+        {#if currentLedgerItems.length === 0}
+          <div class="empty-state" style="padding: 40px; text-align: center; color: var(--text-muted);">
+            <div style="font-size: 40px; margin-bottom: 16px;">📄</div>
+            <h3 style="margin: 0 0 8px;">No Bills Found</h3>
+            <p style="margin: 0; font-size: 14px;">Add a bill to start tracking the ledger for {currentLedgerSupplier.name}.</p>
+          </div>
         {:else}
-          <table style="width: 100%; border-collapse: collapse;">
-            <thead style="background: var(--bg); position: sticky; top: 0;">
-              <tr>
-                <th style="padding: 10px; text-align: left; border-bottom: 1px solid var(--border);">Date</th>
-                <th style="padding: 10px; text-align: left; border-bottom: 1px solid var(--border);">Remarks</th>
-                <th style="padding: 10px; text-align: right; border-bottom: 1px solid var(--border);">Bill Amt</th>
-                <th style="padding: 10px; text-align: right; border-bottom: 1px solid var(--border);">Paid</th>
-                <th style="padding: 10px; text-align: right; border-bottom: 1px solid var(--border);">Pending</th>
-                <th style="padding: 10px; text-align: center; border-bottom: 1px solid var(--border);">Status</th>
-                <th style="padding: 10px; text-align: center; border-bottom: 1px solid var(--border);">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {#each currentSupplierBills as bill}
-                <tr>
-                  <td style="padding: 10px; border-bottom: 1px solid var(--border);">{bill.bill_date}</td>
-                  <td style="padding: 10px; border-bottom: 1px solid var(--border);">{bill.remarks || '--'}</td>
-                  <td style="padding: 10px; border-bottom: 1px solid var(--border); text-align: right;">₹{parseFloat(bill.bill_amount).toFixed(2)}</td>
-                  <td style="padding: 10px; border-bottom: 1px solid var(--border); text-align: right;">₹{parseFloat(bill.amount_paid).toFixed(2)}</td>
-                  <td style="padding: 10px; border-bottom: 1px solid var(--border); text-align: right; font-weight: bold; color: var(--danger);">
-                    ₹{parseFloat(bill.bill_amount - bill.amount_paid).toFixed(2)}
-                  </td>
-                  <td style="padding: 10px; border-bottom: 1px solid var(--border); text-align: center;">
-                    {#if bill.status === 'Paid'}
-                      <span style="background: var(--success); color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">Paid</span>
-                    {:else if bill.status === 'Partial'}
-                      <span style="background: var(--primary); color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">Partial</span>
-                    {:else}
-                      <span style="background: var(--danger); color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">Pending</span>
-                    {/if}
-                  </td>
-                  <td style="padding: 10px; border-bottom: 1px solid var(--border); text-align: center;">
-                    {#if bill.status !== 'Paid'}
-                      <button class="btn-primary" style="padding: 4px 8px; font-size: 11px;" on:click={() => openPayBillModal(bill)}>Pay</button>
-                    {/if}
-                  </td>
+          <div style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+            <table class="data-table" style="width: 100%; border-collapse: collapse; background: var(--card-bg);">
+              <thead>
+                <tr style="background: var(--bg-color);">
+                  <th style="padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Date</th>
+                  <th style="padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Remarks (Invoice)</th>
+                  <th style="padding: 12px 16px; text-align: right; border-bottom: 1px solid var(--border); color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Total Bill</th>
+                  <th style="padding: 12px 16px; text-align: right; border-bottom: 1px solid var(--border); color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Paid Upfront</th>
+                  <th style="padding: 12px 16px; text-align: right; border-bottom: 1px solid var(--border); color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Balance Pending</th>
+                  <th style="padding: 12px 16px; text-align: center; border-bottom: 1px solid var(--border); color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Action</th>
                 </tr>
-              {/each}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {#each currentLedgerItems as item}
+                  <tr style="transition: background 0.2s;" on:mouseover={(e) => e.currentTarget.style.background='var(--bg-color)'} on:mouseleave={(e) => e.currentTarget.style.background='transparent'}>
+                    <td style="padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 14px;">{item.bill_date}</td>
+                    <td style="padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 14px; font-weight: 500;">{item.remarks || '--'}</td>
+                    <td style="padding: 14px 16px; border-bottom: 1px solid var(--border); text-align: right; font-size: 14px;">₹{parseFloat(item.bill_amount).toFixed(2)}</td>
+                    <td style="padding: 14px 16px; border-bottom: 1px solid var(--border); text-align: right; font-size: 14px;">
+                      {#if item.amount_paid > 0}
+                        <span style="color: var(--success); font-weight: 500;">₹{parseFloat(item.amount_paid).toFixed(2)}</span>
+                      {:else}
+                        <span style="color: var(--text-muted);">₹0.00</span>
+                      {/if}
+                    </td>
+                    <td style="padding: 14px 16px; border-bottom: 1px solid var(--border); text-align: right; font-size: 14px;">
+                      {#if (item.bill_amount - item.amount_paid) > 0}
+                        <span style="color: var(--danger); font-weight: 700; background: rgba(239, 68, 68, 0.1); padding: 4px 8px; border-radius: 4px;">₹{(item.bill_amount - item.amount_paid).toFixed(2)}</span>
+                      {:else}
+                        <span style="color: var(--success); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">✓ Settled</span>
+                      {/if}
+                    </td>
+                    <td style="padding: 14px 16px; border-bottom: 1px solid var(--border); text-align: center;">
+                      <div style="display: flex; gap: 6px; justify-content: center; align-items: center;">
+                        {#if (item.bill_amount - item.amount_paid) > 0}
+                          <button class="btn-primary" style="padding: 6px 12px; font-size: 12px; border-radius: 6px; font-weight: 600; box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);" on:click={() => openPayBillModal(item)}>Pay</button>
+                        {/if}
+                        <button class="btn-secondary" style="padding: 6px 10px; font-size: 14px; border-radius: 6px; color: var(--danger); border-color: transparent; background: transparent;" title="Delete Bill" on:click={() => deleteBill(item.id)}>🗑️</button>
+                      </div>
+                    </td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          </div>
         {/if}
       </div>
-      
-      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
-        <button class="btn-secondary" on:click={() => showBillsModal = false}>Close</button>
+
+      <!-- Footer Section -->
+      <div style="padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; background: var(--bg-color); border-radius: 0 0 12px 12px;">
+        <button class="btn-primary" style="padding: 8px 24px; font-weight: 500;" on:click={() => openAddBillModal(currentLedgerSupplier)}>+ Add Bill</button>
+        <button class="btn-secondary" style="padding: 8px 24px; font-weight: 500;" on:click={() => showLedgerModal = false}>Close Ledger</button>
       </div>
+
     </div>
   </div>
 {/if}
 
 {#if showPayBillModal}
-  <div class="modal-overlay show" style="display: flex;">
-    <div class="modal-card" style="background:var(--card-bg); max-width:400px; z-index: 2000;">
+  <div class="modal-overlay show" style="display: flex; z-index: 4000;">
+    <div class="modal-card" style="background:var(--card-bg); max-width:400px;">
       <h3 style="margin-top:0;">Pay Bill</h3>
       <div class="form-group">
         <label>Amount to Pay (Max ₹{payBillMax.toFixed(2)})</label>

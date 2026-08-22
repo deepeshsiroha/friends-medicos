@@ -195,6 +195,20 @@
               </div>
               <div class="kpi-subtext">Average paid transaction value</div>
           </div>
+          <div class="card kpi-card">
+              <div class="kpi-label">TODAY'S PROFIT</div>
+              <div class="kpi-value" style="color: #10b981;">
+                  ₹{($analyticsData.todayProfit || 0).toFixed(2)}
+              </div>
+              <div class="kpi-subtext">Net of COGS and expenses</div>
+          </div>
+          <div class="card kpi-card">
+              <div class="kpi-label">ALL-TIME PROFIT</div>
+              <div class="kpi-value" style="color: #059669;">
+                  ₹{($analyticsData.allTimeProfit || 0).toFixed(2)}
+              </div>
+              <div class="kpi-subtext">Net of COGS and expenses</div>
+          </div>
       </div>
 
       <!-- Charts Grid -->

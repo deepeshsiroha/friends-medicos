@@ -31,11 +31,8 @@
   onMount(() => {
     // 1. Initial fetches
     ipcRenderer.send('get-settings');
-    ipcRenderer.send('get-records');
     ipcRenderer.send('get-inventory');
     ipcRenderer.send('get-bills');
-    ipcRenderer.send('get-suppliers');
-    ipcRenderer.send('get-expenses');
 
     // 2. Register IPC Listeners
     unsubscribes.push(

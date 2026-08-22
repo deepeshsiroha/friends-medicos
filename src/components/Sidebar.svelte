@@ -31,10 +31,15 @@
     sidebarOpen.set(false);
     
     if (tabName === 'history') ipcRenderer.send('get-records');
-    if (tabName === 'billing') ipcRenderer.send('get-bills');
+    if (tabName === 'billing') {
+      ipcRenderer.send('get-bills');
+      ipcRenderer.send('get-inventory');
+    }
     if (tabName === 'inventory') ipcRenderer.send('get-inventory');
     if (tabName === 'analytics') ipcRenderer.send('get-analytics-data');
     if (tabName === 'customers') ipcRenderer.send('get-customers');
+    if (tabName === 'suppliers') ipcRenderer.send('get-suppliers');
+    if (tabName === 'expenses') ipcRenderer.send('get-expenses');
   }
 
   function closeDrawer() {

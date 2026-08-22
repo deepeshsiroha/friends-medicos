@@ -884,7 +884,11 @@ ipcMain.on('save-supplier', (event, supplier) => {
 
 ipcMain.on('add-supplier-payment', (event, supplierId, amount) => {
   try {
-    db.prepare('UPDATE suppliers SET balance = balance + ? WHERE id = ?').run(amount, supplierId);
+    db.transaction(() => {
+      db.prepare('UPDATE suppliers SET balance = balance + ? WHERE id = ?').run(amount, supplierId);
+      db.prepare('INSERT INTO supplier_transactions (supplier_id, transaction_date, type, amount, remarks) VALUES (?, ?, ?, ?, ?)')
+        .run(supplierId, new Date().toISOString().split('T')[0], 'Payment', amount, 'Open Payment');
+    })();
     event.reply('supplier-payment-added', { success: true });
   } catch(e) {
     event.reply('supplier-payment-added', { success: false, error: e.message });
@@ -892,6 +896,45 @@ ipcMain.on('add-supplier-payment', (event, supplierId, amount) => {
 });
 
 // --- SUPPLIER BILLS CHANNELS ---
+ipcMain.on('get-supplier-ledger', (event, supplierId) => {
+  try {
+    const rows = db.prepare('SELECT * FROM supplier_transactions WHERE supplier_id = ? ORDER BY transaction_date DESC, id DESC').all(supplierId);
+    event.reply('supplier-ledger-data', { success: true, rows });
+  } catch(e) {
+    event.reply('supplier-ledger-data', { success: false, error: e.message });
+  }
+});
+
+ipcMain.on('delete-supplier-bill', (event, id) => {
+  try {
+    db.transaction(() => {
+      const bill = db.prepare('SELECT * FROM supplier_bills WHERE id = ?').get(id);
+      if (bill) {
+        const unpaidAmount = bill.bill_amount - bill.amount_paid;
+        // Reverse the balance impact: we owed them (so we subtracted), now we add it back.
+        db.prepare('UPDATE suppliers SET balance = balance + ? WHERE id = ?').run(unpaidAmount, bill.supplier_id);
+        db.prepare('DELETE FROM supplier_bills WHERE id = ?').run(id);
+      }
+    })();
+    event.reply('supplier-bill-deleted', { success: true });
+  } catch(e) {
+    event.reply('supplier-bill-deleted', { success: false, error: e.message });
+  }
+});
+
+ipcMain.on('delete-supplier', (event, id) => {
+  try {
+    db.transaction(() => {
+      db.prepare('DELETE FROM supplier_transactions WHERE supplier_id=?').run(id);
+      db.prepare('DELETE FROM supplier_bills WHERE supplier_id=?').run(id);
+      db.prepare('DELETE FROM suppliers WHERE id=?').run(id);
+    })();
+    event.reply('supplier-deleted', { success: true });
+  } catch(e) {
+    event.reply('supplier-deleted', { success: false, error: e.message });
+  }
+});
+
 ipcMain.on('get-supplier-bills', (event, supplierId) => {
   try {
     const rows = db.prepare('SELECT * FROM supplier_bills WHERE supplier_id = ? ORDER BY bill_date DESC, id DESC').all(supplierId);
@@ -909,7 +952,7 @@ ipcMain.on('save-supplier-bill', (event, bill) => {
         .run(bill.supplier_id, bill.bill_date, bill.bill_amount, bill.amount_paid, status, bill.remarks);
       
       const unpaidAmount = bill.bill_amount - bill.amount_paid;
-      // Adding a bill increases what we owe (decreases the balance)
+      // Adding a bill decreases the balance (negative balance = we owe them)
       db.prepare('UPDATE suppliers SET balance = balance - ? WHERE id = ?').run(unpaidAmount, bill.supplier_id);
     })();
     event.reply('supplier-bill-saved', { success: true });
@@ -918,17 +961,16 @@ ipcMain.on('save-supplier-bill', (event, bill) => {
   }
 });
 
-ipcMain.on('pay-supplier-bill', (event, billId, amount) => {
+ipcMain.on('pay-supplier-bill', (event, data) => {
   try {
     db.transaction(() => {
-      const bill = db.prepare('SELECT * FROM supplier_bills WHERE id = ?').get(billId);
+      db.prepare('UPDATE supplier_bills SET amount_paid = amount_paid + ?, status = CASE WHEN amount_paid + ? >= bill_amount THEN \'Paid\' ELSE \'Partial\' END WHERE id = ?')
+        .run(data.amount, data.amount, data.billId);
+      
+      const bill = db.prepare('SELECT supplier_id FROM supplier_bills WHERE id = ?').get(data.billId);
       if (bill) {
-        const newPaid = bill.amount_paid + amount;
-        const status = newPaid >= bill.bill_amount ? 'Paid' : 'Partial';
-        db.prepare('UPDATE supplier_bills SET amount_paid = ?, status = ? WHERE id = ?').run(newPaid, status, billId);
-        
-        // Paying off a bill decreases what we owe (increases the balance)
-        db.prepare('UPDATE suppliers SET balance = balance + ? WHERE id = ?').run(amount, bill.supplier_id);
+        // Payment increases balance
+        db.prepare('UPDATE suppliers SET balance = balance + ? WHERE id = ?').run(data.amount, bill.supplier_id);
       }
     })();
     event.reply('supplier-bill-paid', { success: true });
