@@ -902,7 +902,12 @@ ipcMain.on('search-customers', (event, term) => {
 // --- SUPPLIER LEDGER CHANNELS ---
 ipcMain.on('get-suppliers', (event) => {
   try {
-    const rows = db.prepare('SELECT * FROM suppliers ORDER BY name ASC').all();
+    const rows = db.prepare(`SELECT 
+      s.*, 
+      COALESCE((SELECT SUM(bill_amount) FROM supplier_bills WHERE supplier_id = s.id), 0) as total_bill_amount,
+      COALESCE((SELECT SUM(amount_paid) FROM supplier_bills WHERE supplier_id = s.id), 0) as total_amount_paid
+    FROM suppliers s 
+    ORDER BY s.name ASC`).all();
     event.reply('suppliers-data', { success: true, rows });
   } catch(e) {
     event.reply('suppliers-data', { success: false, rows: [], error: e.message });

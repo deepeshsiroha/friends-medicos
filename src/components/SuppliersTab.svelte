@@ -202,7 +202,7 @@
 
   function saveSupplierBill() {
     if (supplierBillAmount <= 0) return alert("Bill amount must be positive");
-    if (supplierAmountPaid < 0 || supplierAmountPaid > supplierBillAmount) return alert("Invalid amount paid");
+    if (supplierAmountPaid < 0) return alert("Amount paid cannot be negative");
     
     window.ipcRenderer.send('save-supplier-bill', {
       supplier_id: billSupplierId,
@@ -226,7 +226,7 @@
   }
 
   function saveBillPayment() {
-    if (payBillAmount <= 0 || payBillAmount > payBillMax) return alert("Invalid payment amount");
+    if (payBillAmount <= 0) return alert("Invalid payment amount");
     window.ipcRenderer.send('pay-supplier-bill', { billId: payBillId, amount: payBillAmount });
   }
 </script>
@@ -253,9 +253,9 @@
             <tr>
               <th>ID</th>
               <th>Supplier Name</th>
-              <th>Contact</th>
-              <th>GSTIN</th>
-              <th>Current Balance</th>
+              <th>Total Bill Amount</th>
+              <th>Total Paid</th>
+              <th>Balance to Pay</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -264,10 +264,13 @@
               <tr>
                 <td>#{sup.id}</td>
                 <td style="font-weight: bold; color: var(--primary);">{sup.name}</td>
-                <td>{sup.contact || '--'}</td>
-                <td>{sup.gstin || '--'}</td>
-                <td style="font-weight: bold; color: {sup.balance > 0 ? 'var(--success)' : (sup.balance < 0 ? 'var(--danger)' : 'var(--text)')};">
-                  {sup.balance < 0 ? '-' : ''}₹{Math.abs(sup.balance || 0).toFixed(2)}
+                <td style="color: var(--text-muted);">₹{parseFloat(sup.total_bill_amount || 0).toFixed(2)}</td>
+                <td style="color: var(--text-muted);">₹{parseFloat(sup.total_amount_paid || 0).toFixed(2)}</td>
+                <td style="font-weight: bold; color: {(sup.total_bill_amount - sup.total_amount_paid) > 0 ? 'red' : ((sup.total_bill_amount - sup.total_amount_paid) < 0 ? 'green' : 'black')};">
+                  ₹{Math.abs((sup.total_bill_amount || 0) - (sup.total_amount_paid || 0)).toFixed(2)}
+                  {#if (sup.total_bill_amount - sup.total_amount_paid) < 0}
+                    <span style="font-size: 10px; font-weight: normal; margin-left: 4px;">(Advance)</span>
+                  {/if}
                 </td>
                 <td>
                   <div style="display:flex; gap:8px;">
