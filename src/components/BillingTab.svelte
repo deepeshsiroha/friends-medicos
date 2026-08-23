@@ -324,17 +324,17 @@
     const doc = new jsPDF({ orientation: "landscape", format: "a5" });
     const formattedDate = formatDateIST(bill.bill_date || new Date(), true);
 
-    doc.setFont("helvetica", "bold"); doc.setFontSize(18);
-    doc.text($currentSettings.pharmacy_name ?? "Friends Medicos", 105, 15, { align: "center" });
-    doc.setFontSize(10); doc.setFont("helvetica", "normal");
-    doc.text($currentSettings.pharmacy_address ?? "Main Bazar, Narnaul, 123001 (Haryana)", 105, 21, { align: "center" });
-    doc.setFont("helvetica", "bold"); doc.text(`Contact: ${$currentSettings.pharmacy_contact ?? '+91 9999999999'}`, 105, 27, { align: "center" });
+    doc.setFont("helvetica", "bold"); doc.setFontSize(16);
+    doc.text($currentSettings.pharmacy_name ?? "Friends Medicos", 105, 12, { align: "center" });
+    doc.setFontSize(9); doc.setFont("helvetica", "normal");
+    doc.text($currentSettings.pharmacy_address ?? "Main Bazar, Narnaul, 123001 (Haryana)", 105, 17, { align: "center" });
+    doc.setFont("helvetica", "bold"); doc.text(`Contact: ${$currentSettings.pharmacy_contact ?? '+91 9999999999'}`, 105, 22, { align: "center" });
     
     let sub = [];
     if ($currentSettings.pharmacy_license) sub.push(`DL: ${$currentSettings.pharmacy_license}`);
     if ($currentSettings.pharmacy_gstin) sub.push(`GSTIN: ${$currentSettings.pharmacy_gstin}`);
     if (sub.length > 0) {
-      doc.setFont("helvetica", "normal"); doc.text(sub.join(' | '), 105, 32, { align: "center" });
+      doc.setFont("helvetica", "normal"); doc.text(sub.join(' | '), 105, 26, { align: "center" });
     }
 
     // Draw Watermark
@@ -362,39 +362,37 @@
           ctx.putImageData(imgData, 0, 0);
           const wmBase64 = canvas.toDataURL('image/png');
           const wmSize = 140;
-          doc.addImage(wmBase64, 'PNG', (210 - wmSize)/2, (148 - wmSize)/2 + 10, wmSize, wmSize);
+          doc.addImage(wmBase64, 'PNG', (210 - wmSize)/2, (148 - wmSize)/2 + 5, wmSize, wmSize);
         }
       }
     } catch (err) {
       console.warn('Failed to add watermark to PDF', err);
     }
 
-    doc.setFont("helvetica", "bold"); doc.setFontSize(14);
-    doc.text("INVOICE RECEIPT", 105, 45, { align: "center" });
+    doc.setFont("helvetica", "bold"); doc.setFontSize(12);
+    doc.text("INVOICE RECEIPT", 105, 34, { align: "center" });
 
-    doc.setFontSize(10); doc.setFont("helvetica", "normal");
-    doc.rect(15, 52, 180, 24);
-    doc.text(`Patient Name: ${bill.patient_name}`, 18, 58);
-    doc.text(`Mobile Number: ${bill.patient_mobile}`, 18, 64);
-    doc.text(`Invoice No: INV-${bill.id}`, 192, 58, { align: "right" });
-    doc.text(`Date & Time: ${formattedDate}`, 192, 64, { align: "right" });
-    doc.text(`Payment Mode: ${bill.payment_method} (${bill.payment_status})`, 18, 70);
+    doc.setFontSize(9); doc.setFont("helvetica", "normal");
+    doc.rect(15, 38, 180, 18);
+    doc.text(`Patient Name: ${bill.patient_name}`, 18, 44);
+    doc.text(`Mobile Number: ${bill.patient_mobile}`, 18, 51);
+    doc.text(`Invoice No: INV-${bill.id}`, 192, 44, { align: "right" });
+    doc.text(`Date: ${formattedDate}`, 192, 51, { align: "right" });
 
-    let y = 95;
+    let y = 69;
     doc.setFont("helvetica", "bold");
-    doc.line(15, 80, 195, 80);
-    doc.text("S.No.", 18, 85);
-    doc.text("Item Description", 35, 85);
-    doc.text("Qty", 125, 85, { align: "center" });
-    doc.text("Unit Price (Rs.)", 155, 85, { align: "right" });
-    doc.text("Total (Rs.)", 192, 85, { align: "right" });
-    doc.line(15, 88, 195, 88);
+    doc.line(15, 57, 195, 57);
+    doc.text("S.No.", 18, 62);
+    doc.text("Item Description", 35, 62);
+    doc.text("Qty", 125, 62, { align: "center" });
+    doc.text("Unit Price (Rs.)", 155, 62, { align: "right" });
+    doc.text("Total (Rs.)", 192, 62, { align: "right" });
+    doc.line(15, 64, 195, 64);
 
     doc.setFont("helvetica", "normal");
     const items = bill.items || [];
     items.forEach((item: any, index: number) => {
-      // Check if we need to add a new page (A5 landscape height is 148, leave 20 for margin)
-      if (y > 120) {
+      if (y > 130) {
         doc.addPage();
         y = 15;
         doc.setFont("helvetica", "bold");
@@ -404,8 +402,8 @@
         doc.text("Qty", 125, y + 5, { align: "center" });
         doc.text("Unit Price (Rs.)", 155, y + 5, { align: "right" });
         doc.text("Total (Rs.)", 192, y + 5, { align: "right" });
-        doc.line(15, y + 8, 195, y + 8);
-        y += 13;
+        doc.line(15, y + 7, 195, y + 7);
+        y += 12;
         doc.setFont("helvetica", "normal");
       }
 
@@ -419,7 +417,6 @@
       
       for (let i = 1; i < descriptionLines.length; i++) {
         y += 5;
-        // Check for page break during multi-line description
         if (y > 135) {
           doc.addPage();
           y = 15;
@@ -436,33 +433,33 @@
       y = 15;
     }
 
-    doc.line(15, y - 3, 195, y - 3);
+    doc.line(15, y - 2, 195, y - 2);
 
     y += 4;
     doc.text("Subtotal:", 145, y, { align: "right" });
     doc.text(`Rs. ${parseFloat(bill.subtotal).toFixed(2)}`, 192, y, { align: "right" });
 
-    y += 6;
+    y += 5;
     doc.text("Discount:", 145, y, { align: "right" });
     doc.text(`Rs. ${parseFloat(bill.discount).toFixed(2)}`, 192, y, { align: "right" });
 
-    y += 8;
-    doc.setFont("helvetica", "bold");
+    y += 6;
+    doc.setFont("helvetica", "bold"); doc.setFontSize(10);
     doc.text("Grand Total:", 145, y, { align: "right" });
     doc.text(`Rs. ${parseFloat(bill.total).toFixed(2)}`, 192, y, { align: "right" });
 
-    doc.setFont("helvetica", "normal");
-    y += 6;
-    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(8);
+    y += 5;
     const cgst = parseFloat(bill.cgst_total || 0).toFixed(2);
     const sgst = parseFloat(bill.sgst_total || 0).toFixed(2);
-    doc.text(`(Inclusive of GST - CGST: Rs. ${cgst} | SGST: Rs. ${sgst})`, 192, y, { align: "right" });
+    doc.text(`(GST Inclusive - CGST: ${cgst} | SGST: ${sgst})`, 192, y, { align: "right" });
+    doc.text(`Payment Mode: ${bill.payment_method} (${bill.payment_status})`, 15, y);
 
-    doc.setFont("helvetica", "normal");
+    y += 12;
     doc.setFontSize(9);
-    doc.text(`Thank you for visiting ${$currentSettings.pharmacy_name ?? "Friends Medicos"}!`, 15, y + 15);
-    doc.text("Authorized Signature / Seal", 195, y + 25, { align: "right" });
-    doc.line(155, y + 20, 195, y + 20);
+    doc.text(`Thank you for visiting ${$currentSettings.pharmacy_name ?? "Friends Medicos"}!`, 15, y);
+    doc.text("Authorized Signature", 195, y, { align: "right" });
+    doc.line(160, y - 4, 195, y - 4);
 
     return doc;
   }
