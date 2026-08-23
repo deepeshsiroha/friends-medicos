@@ -15,6 +15,7 @@
   let billSgstTotal = 0;
   let billDiscount = 0;
   let discountPercent = 0;
+  let discountMode = 'percent';
   let billSubtotal = 0;
   let billTotal = 0;
 
@@ -121,15 +122,21 @@
       return sum + item.total;
     }, 0);
     
-    // If discount percentage is being used, update absolute discount
-    if (discountPercent > 0) {
+    if (discountMode === 'percent') {
       billDiscount = parseFloat(((billSubtotal * discountPercent) / 100).toFixed(2)) || 0;
+    } else {
+      if (billSubtotal > 0) {
+        discountPercent = parseFloat(((billDiscount / billSubtotal) * 100).toFixed(2)) || 0;
+      } else {
+        discountPercent = 0;
+      }
     }
     
     billTotal = Math.max(0, billSubtotal - (billDiscount || 0));
   }
 
   function onDiscountPercentChange() {
+    discountMode = 'percent';
     if (discountPercent < 0) discountPercent = 0;
     if (discountPercent > 100) discountPercent = 100;
     billDiscount = parseFloat(((billSubtotal * discountPercent) / 100).toFixed(2)) || 0;
@@ -137,6 +144,7 @@
   }
 
   function onDiscountAmountChange() {
+    discountMode = 'amount';
     if (billSubtotal > 0) {
       discountPercent = parseFloat(((billDiscount / billSubtotal) * 100).toFixed(2)) || 0;
     } else {
@@ -268,6 +276,7 @@
     billRemarks = '';
     billDiscount = 0;
     discountPercent = 0;
+    discountMode = 'percent';
     billSubtotal = 0;
     billTotal = 0;
     billItems = [];
