@@ -213,12 +213,22 @@
                   <div class="form-group">
                       <label for="inv-category">Category</label>
                       <select id="inv-category" bind:value={invCategory}>
-                          <option value="Tablet">Tablet</option>
+                                                    <option value="Tablet">Tablet</option>
                           <option value="Syrup">Syrup</option>
                           <option value="Powder">Powder</option>
                           <option value="Ointment/Gel">Ointment/Gel</option>
                           <option value="Injection Vial">Injection Vial</option>
                           <option value="Injection Ampule">Injection Ampule</option>
+                          <option value="Liquid">Liquid</option>
+                          <option value="Bolus">Bolus</option>
+                          <option value="Syringe">Syringe</option>
+                          <option value="Needle">Needle</option>
+                          <option value="IV Set">IV Set</option>
+                          <option value="SV Set">SV Set</option>
+                          <option value="Condom">Condom</option>
+                          <option value="Spray">Spray</option>
+                          <option value="Bandage">Bandage</option>
+                          <option value="Band Aid">Band Aid</option>
                       </select>
                   </div>
                   <div class="form-group"><label for="inv-batch">Batch No.</label><input type="text" id="inv-batch" bind:value={invBatch}></div>
@@ -250,12 +260,22 @@
                       <span style="font-weight:600; color:var(--text-muted);">Category:</span>
                       <select bind:value={filterCategory} style="padding:6px 10px; border:1px solid var(--border); border-radius:4px; background:var(--bg); color:var(--text); font-size:12px; height: 32px; min-width: 100px;">
                            <option value="All">All Categories</option>
-                          <option value="Tablet">Tablet</option>
+                                                    <option value="Tablet">Tablet</option>
                           <option value="Syrup">Syrup</option>
                           <option value="Powder">Powder</option>
                           <option value="Ointment/Gel">Ointment/Gel</option>
                           <option value="Injection Vial">Injection Vial</option>
                           <option value="Injection Ampule">Injection Ampule</option>
+                          <option value="Liquid">Liquid</option>
+                          <option value="Bolus">Bolus</option>
+                          <option value="Syringe">Syringe</option>
+                          <option value="Needle">Needle</option>
+                          <option value="IV Set">IV Set</option>
+                          <option value="SV Set">SV Set</option>
+                          <option value="Condom">Condom</option>
+                          <option value="Spray">Spray</option>
+                          <option value="Bandage">Bandage</option>
+                          <option value="Band Aid">Band Aid</option>
                       </select>
                   </div>
                   
