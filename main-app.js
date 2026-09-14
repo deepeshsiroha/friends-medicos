@@ -716,7 +716,7 @@ ipcMain.on('get-analytics-data', (event) => {
     let todayUpi = 0;
     todayPaymentRows.forEach(row => {
       if (row.payment_method === 'Cash') todayCash = row.total || 0;
-      if (row.payment_method === 'UPI' || row.payment_method === 'Online') todayUpi = row.total || 0;
+      if (row.payment_method === 'UPI / GPay' || row.payment_method === 'UPI' || row.payment_method === 'Online' || row.payment_method === 'Card') todayUpi += row.total || 0;
     });
 
     // 2. Outstanding Dues (Unpaid Bills)
