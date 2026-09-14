@@ -547,8 +547,8 @@
       }
     };
   }
-  async function exportToCSV() {
-    const res = await ipcRenderer.invoke('export-csv', 'sales');
+  async function exportToExcel() {
+    const res = await ipcRenderer.invoke('export-excel', 'sales');
     if (res.success) {
       showToast('Export saved successfully!');
     } else if (!res.cancelled) {
@@ -774,7 +774,7 @@
                 <input type="text" id="bill-search-input" on:input={searchInvoices} bind:value={billSearchQuery}
                     placeholder="Search patient name or mobile..."
                     style="width: 230px; padding: 6px 12px; font-size: 12px; border-radius: 6px; margin: 0;">
-                <button class="btn-primary" on:click={exportToCSV} style="background: var(--primary); padding: 6px 12px; font-size: 12px;">Export CSV</button>
+                <button class="btn-primary" on:click={exportToExcel} style="background: var(--primary); padding: 6px 12px; font-size: 12px;">Export Excel</button>
             </div>
         </header>
 

@@ -1076,12 +1076,14 @@ ipcMain.on('delete-expense', (event, id) => {
   }
 });
 
-// --- EXPORT TO CSV CHANNELS ---
-ipcMain.handle('export-csv', async (event, moduleName) => {
+// --- EXPORT TO EXCEL CHANNELS ---
+const xlsx = require('xlsx');
+
+ipcMain.handle('export-excel', async (event, moduleName) => {
   try {
     let data = [];
     let headers = [];
-    let defaultFilename = `${moduleName}_export_${getISTDateTimeString().substring(0, 10)}.csv`;
+    let defaultFilename = `${moduleName}_export_${getISTDateTimeString().substring(0, 10)}.xlsx`;
 
     if (moduleName === 'inventory') {
       const rows = db.prepare('SELECT * FROM inventory ORDER BY item_name ASC').all();
@@ -1115,25 +1117,18 @@ ipcMain.handle('export-csv', async (event, moduleName) => {
       throw new Error("Unknown module for export");
     }
 
-    const csvLines = [headers.map(h => `"${h}"`).join(',')];
-    data.forEach(row => {
-      const line = row.map(cell => {
-        let str = cell === null || cell === undefined ? '' : String(cell);
-        str = str.replace(/"/g, '""'); // escape double quotes
-        return `"${str}"`;
-      });
-      csvLines.push(line.join(','));
-    });
-    const csvContent = csvLines.join('\n');
-
     const { filePath } = await dialog.showSaveDialog(mainWindow, {
-      title: 'Save CSV Export',
+      title: 'Save Excel Export',
       defaultPath: path.join(app.getPath('documents'), defaultFilename),
-      filters: [{ name: 'CSV Files', extensions: ['csv'] }]
+      filters: [{ name: 'Excel Files', extensions: ['xlsx'] }]
     });
 
     if (filePath) {
-      fs.writeFileSync(filePath, csvContent, 'utf-8');
+      const worksheet = xlsx.utils.aoa_to_sheet([headers, ...data]);
+      const workbook = xlsx.utils.book_new();
+      xlsx.utils.book_append_sheet(workbook, worksheet, "Export");
+      xlsx.writeFile(workbook, filePath);
+      
       return { success: true, filePath };
     } else {
       return { success: false, cancelled: true };

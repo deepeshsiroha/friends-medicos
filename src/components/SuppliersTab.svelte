@@ -229,8 +229,8 @@
     if (payBillAmount <= 0) return alert("Invalid payment amount");
     window.ipcRenderer.send('pay-supplier-bill', { billId: payBillId, amount: payBillAmount });
   }
-  async function exportToCSV() {
-    const res = await ipcRenderer.invoke('export-csv', 'suppliers');
+  async function exportToExcel() {
+    const res = await ipcRenderer.invoke('export-excel', 'suppliers');
     if (res.success) {
       showToast('Export saved successfully!');
     } else if (!res.cancelled) {
@@ -248,7 +248,7 @@
     <div style="display: flex; gap: 10px; align-items: center;">
       <input type="text" placeholder="🔍 Search Supplier..." bind:value={searchQuery} style="margin: 0; min-width: 250px;">
       <button class="btn-primary" on:click={() => openAddModal(null)}>+ Add Supplier</button>
-      <button class="btn-primary" on:click={exportToCSV} style="background: var(--primary);">Export CSV</button>
+      <button class="btn-primary" on:click={exportToExcel} style="background: var(--primary);">Export Excel</button>
     </div>
   </div>
 

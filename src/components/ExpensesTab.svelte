@@ -61,8 +61,8 @@
 
   $: totalExpenses = $expensesList.reduce((sum, exp) => sum + exp.amount, 0);
 
-  async function exportToCSV() {
-    const res = await ipcRenderer.invoke('export-csv', 'expenses');
+  async function exportToExcel() {
+    const res = await ipcRenderer.invoke('export-excel', 'expenses');
     if (res.success) {
       showToast('Export saved successfully!');
     } else if (!res.cancelled) {
@@ -77,7 +77,7 @@
       <h2>Daily Expenses</h2>
       <p class="subtitle">Track your shop's daily expenditures</p>
     </div>
-    <button class="btn-primary" on:click={exportToCSV} style="background: var(--primary); padding: 8px 16px; font-size: 14px;">
+    <button class="btn-primary" on:click={exportToExcel} style="background: var(--primary); padding: 8px 16px; font-size: 14px;">
       Export CSV
     </button>
   </div>
