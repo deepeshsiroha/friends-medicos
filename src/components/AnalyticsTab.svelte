@@ -158,7 +158,10 @@
               <div class="kpi-value" style="color: var(--success);">
                   ₹{($analyticsData.todayRevenue || 0).toFixed(2)}
               </div>
-              <div class="kpi-subtext">Paid receipts today</div>
+              <div class="kpi-subtext" style="display: flex; gap: 10px; margin-top: 4px;">
+                  <span style="color: var(--text-muted);">Cash: ₹{($analyticsData.todayCash || 0).toFixed(2)}</span>
+                  <span style="color: var(--text-muted);">UPI: ₹{($analyticsData.todayUpi || 0).toFixed(2)}</span>
+              </div>
           </div>
           <div class="card kpi-card">
               <div class="kpi-label">THIS MONTH'S REVENUE</div>
