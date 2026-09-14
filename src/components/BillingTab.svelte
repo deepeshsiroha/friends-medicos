@@ -18,6 +18,7 @@
   let discountMode = 'percent';
   let billSubtotal = 0;
   let billTotal = 0;
+  let billTotalCost = 0; // For user reference only
 
   let currentSubTab = 'pos'; // 'pos' or 'history'
 
@@ -108,8 +109,10 @@
   function calculateTotals() {
     billCgstTotal = 0;
     billSgstTotal = 0;
+    billTotalCost = 0;
     billSubtotal = billItems.reduce((sum, item) => {
       item.total = item.qty * (parseFloat(item.unit_price) || 0);
+      billTotalCost += item.qty * (parseFloat(item.buying_price) || 0);
       
       const gstRate = item.gst_rate ?? 12.0;
       const taxAmount = item.total - (item.total / (1 + (gstRate / 100)));
@@ -279,6 +282,7 @@
     discountMode = 'percent';
     billSubtotal = 0;
     billTotal = 0;
+    billTotalCost = 0;
     billItems = [];
     showMobileSuggest = false;
   }
@@ -736,6 +740,9 @@
                             style="display: flex; justify-content: space-between; font-weight: bold; font-size: 14px; border-top: 1px solid var(--border); padding-top: 6px; color: var(--primary);">
                             <span>Total:</span>
                             <span id="bill-sum-total">₹{billTotal.toFixed(2)}</span>
+                        </div>
+                        <div style="font-size: 10px; color: var(--text-muted); text-align: right; margin-top: 4px; font-style: italic;">
+                            (Est. Cost: ₹{billTotalCost.toFixed(2)})
                         </div>
                     </div>
                 </div>
