@@ -695,7 +695,7 @@
                                 <select id="bill-payment-method" bind:value={billPaymentMethod}
                                     style="padding: 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--card-bg); color: var(--text);">
                                     <option value="Cash">Cash</option>
-                                    <option value="UPI / GPay">UPI / GPay</option>
+                                    <option value="UPI">UPI</option>
                                     <option value="Card">Card</option>
                                 </select>
                             </div>
