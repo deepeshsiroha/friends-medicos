@@ -705,6 +705,20 @@ ipcMain.on('get-analytics-data', (event) => {
     `).get(todayStr);
     const todayRevenue = todayRevenueRow ? (todayRevenueRow.total || 0) : 0;
 
+    const todayPaymentRows = db.prepare(`
+      SELECT payment_method, SUM(total) as total 
+      FROM bills 
+      WHERE date(bill_date) = date(?) AND payment_status = 'Paid'
+      GROUP BY payment_method
+    `).all(todayStr);
+    
+    let todayCash = 0;
+    let todayUpi = 0;
+    todayPaymentRows.forEach(row => {
+      if (row.payment_method === 'Cash') todayCash = row.total || 0;
+      if (row.payment_method === 'UPI' || row.payment_method === 'Online') todayUpi = row.total || 0;
+    });
+
     // 2. Outstanding Dues (Unpaid Bills)
     const unpaidRow = db.prepare(`
       SELECT COUNT(*) as count, SUM(total) as total 
@@ -846,6 +860,8 @@ ipcMain.on('get-analytics-data', (event) => {
       todayProfit,
       allTimeProfit,
       todayRevenue,
+      todayCash,
+      todayUpi,
       unpaidCount,
       unpaidTotal,
       thisMonthRevenue,
