@@ -258,6 +258,9 @@
           <div class="table-header-controls" style="display:flex; flex-direction:column; gap:12px; margin-bottom: 20px;">
               <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                   <h2>Current Stock Ledger</h2>
+                  <button class="btn-primary" on:click={exportToCSV} style="background: var(--primary); padding: 6px 12px; font-size: 13px; margin-left: auto;">
+                    Export CSV
+                  </button>
                   <input type="text" id="stock-table-search" class="inline-search" bind:value={stockFilterQuery}
                       placeholder="🔍 Filter stock by name/batch/supplier..." style="max-width:350px; margin:0;">
               </div>

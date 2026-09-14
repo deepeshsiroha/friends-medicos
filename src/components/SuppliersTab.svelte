@@ -248,6 +248,7 @@
     <div style="display: flex; gap: 10px; align-items: center;">
       <input type="text" placeholder="🔍 Search Supplier..." bind:value={searchQuery} style="margin: 0; min-width: 250px;">
       <button class="btn-primary" on:click={() => openAddModal(null)}>+ Add Supplier</button>
+      <button class="btn-primary" on:click={exportToCSV} style="background: var(--primary);">Export CSV</button>
     </div>
   </div>
 

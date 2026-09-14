@@ -770,9 +770,12 @@
         <header
             style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 10px;">
             <h2 style="margin: 0; font-size: 18px; font-family: 'Outfit', sans-serif;">Billing History</h2>
-            <input type="text" id="bill-search-input" on:input={searchInvoices} bind:value={billSearchQuery}
-                placeholder="Search patient name or mobile..."
-                style="width: 230px; padding: 6px 12px; font-size: 12px; border-radius: 6px; margin: 0;">
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <input type="text" id="bill-search-input" on:input={searchInvoices} bind:value={billSearchQuery}
+                    placeholder="Search patient name or mobile..."
+                    style="width: 230px; padding: 6px 12px; font-size: 12px; border-radius: 6px; margin: 0;">
+                <button class="btn-primary" on:click={exportToCSV} style="background: var(--primary); padding: 6px 12px; font-size: 12px;">Export CSV</button>
+            </div>
         </header>
 
         <div style="flex: 1; overflow-y: auto;">

@@ -72,11 +72,14 @@
 </script>
 
 <div class="tab-content active fade-in">
-  <div class="header-container">
+  <div class="header-container" style="display: flex; justify-content: space-between; align-items: center;">
     <div>
       <h2>Daily Expenses</h2>
       <p class="subtitle">Track your shop's daily expenditures</p>
     </div>
+    <button class="btn-primary" on:click={exportToCSV} style="background: var(--primary); padding: 8px 16px; font-size: 14px;">
+      Export CSV
+    </button>
   </div>
 
   <div class="split-layout">
