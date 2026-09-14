@@ -48,6 +48,18 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
             console.warn(`Blocked unauthorized IPC send on channel: ${channel}`);
         }
     },
+    
+    invoke: (channel, ...args) => {
+        const allowedInvokeChannels = [
+            'export-excel'
+        ];
+        if (allowedInvokeChannels.includes(channel)) {
+            return ipcRenderer.invoke(channel, ...args);
+        } else {
+            console.warn(`Blocked unauthorized IPC invoke on channel: ${channel}`);
+            return Promise.reject(`Unauthorized IPC channel: ${channel}`);
+        }
+    },
     on: (channel, listener) => {
         const allowedReceiveChannels = [
             'records-data',
