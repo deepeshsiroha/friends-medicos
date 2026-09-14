@@ -972,7 +972,7 @@ ipcMain.on('delete-supplier-bill', (event, id) => {
 ipcMain.on('delete-supplier', (event, id) => {
   try {
     db.transaction(() => {
-      db.prepare('DELETE FROM supplier_transactions WHERE supplier_id=?').run(id);
+      try { db.prepare('DELETE FROM supplier_transactions WHERE supplier_id=?').run(id); } catch(e) {}
       db.prepare('DELETE FROM supplier_bills WHERE supplier_id=?').run(id);
       db.prepare('DELETE FROM suppliers WHERE id=?').run(id);
     })();
