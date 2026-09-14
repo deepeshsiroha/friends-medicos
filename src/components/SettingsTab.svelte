@@ -48,25 +48,25 @@
         <span class="section-label">Pharmacy Information</span>
         <div class="form-group">
             <label for="set-pharmacy-name">Pharmacy Name</label>
-            <input type="text" id="set-pharmacy-name" placeholder="e.g. Friends Medicos" bind:value={pharmacyName}>
+            <input type="text" id="set-pharmacy-name" placeholder="e.g. Friends Medicos" bind:value={pharmacyName} disabled>
         </div>
         <div class="form-group">
             <label for="set-pharmacy-address">Pharmacy Address</label>
-            <input type="text" id="set-pharmacy-address" placeholder="e.g. Main Bazar, Narnaul, 123001 (Haryana)" bind:value={pharmacyAddress}>
+            <input type="text" id="set-pharmacy-address" placeholder="e.g. Main Bazar, Narnaul, 123001 (Haryana)" bind:value={pharmacyAddress} disabled>
         </div>
         <div class="form-group">
             <label for="set-pharmacy-contact">Contact Number</label>
-            <input type="text" id="set-pharmacy-contact" placeholder="e.g. +91 9999999999" bind:value={pharmacyContact}>
+            <input type="text" id="set-pharmacy-contact" placeholder="e.g. +91 9999999999" bind:value={pharmacyContact} disabled>
         </div>
 
         <span class="section-label">Legal Information</span>
         <div class="form-group">
             <label for="set-pharmacy-license">Drug License No (DL)</label>
-            <input type="text" id="set-pharmacy-license" placeholder="e.g. DL-12345-A" bind:value={pharmacyLicense}>
+            <input type="text" id="set-pharmacy-license" placeholder="e.g. DL-12345-A" bind:value={pharmacyLicense} disabled>
         </div>
         <div class="form-group">
             <label for="set-pharmacy-gstin">GSTIN Number (Optional)</label>
-            <input type="text" id="set-pharmacy-gstin" placeholder="e.g. 06AAAAA0000A1Z5" bind:value={pharmacyGstin}>
+            <input type="text" id="set-pharmacy-gstin" placeholder="e.g. 06AAAAA0000A1Z5" bind:value={pharmacyGstin} disabled>
         </div>
 
         <span class="section-label">Inventory & Alerts Settings</span>
