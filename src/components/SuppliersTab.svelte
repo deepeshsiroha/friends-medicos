@@ -229,6 +229,14 @@
     if (payBillAmount <= 0) return alert("Invalid payment amount");
     window.ipcRenderer.send('pay-supplier-bill', { billId: payBillId, amount: payBillAmount });
   }
+  async function exportToCSV() {
+    const res = await ipcRenderer.invoke('export-csv', 'suppliers');
+    if (res.success) {
+      showToast('Export saved successfully!');
+    } else if (!res.cancelled) {
+      alert('Export failed: ' + res.error);
+    }
+  }
 </script>
 
 <div id="suppliers-tab" class="tab-content {$activeTab === 'suppliers' ? 'active' : ''}">

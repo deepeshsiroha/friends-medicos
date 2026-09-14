@@ -196,6 +196,14 @@
 
     return true;
   });
+  async function exportToCSV() {
+    const res = await ipcRenderer.invoke('export-csv', 'inventory');
+    if (res.success) {
+      showToast('Export saved successfully!');
+    } else if (!res.cancelled) {
+      alert('Export failed: ' + res.error);
+    }
+  }
 </script>
 
 <div id="inventory-tab" class="tab-content active">

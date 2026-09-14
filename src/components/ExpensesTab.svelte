@@ -61,6 +61,14 @@
 
   $: totalExpenses = $expensesList.reduce((sum, exp) => sum + exp.amount, 0);
 
+  async function exportToCSV() {
+    const res = await ipcRenderer.invoke('export-csv', 'expenses');
+    if (res.success) {
+      showToast('Export saved successfully!');
+    } else if (!res.cancelled) {
+      alert('Export failed: ' + res.error);
+    }
+  }
 </script>
 
 <div class="tab-content active fade-in">
